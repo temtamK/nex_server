@@ -11,17 +11,25 @@ datasource db {
 }
 
 model User {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  email String  @unique
-  name  String?
-  posts Post[]
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  username String @unique
+  email    String @unique
+  password String
+  posts    Post[] 
 }
 
 model Post {
-  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
   title     String
-  content   String?
-  published Boolean? @default(false)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  String? @db.ObjectId
+  content   String
+  authorId  String  @db.ObjectId
+  author    User    @relation(fields: [authorId], references: [id])
+  channelId String  @db.ObjectId
+  channel   Channel @relation(fields: [channelId], references: [id])
+}
+
+model Channel {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  name  String
+  posts Post[]
 }
