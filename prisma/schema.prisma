@@ -6,11 +6,17 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  address  String @unique
+  id      Int      @id @default(autoincrement())
+  address String   @unique
+  grade   Int
+  tokenId Int
+}
+
+model nonce {
+  id      Int      @id
 }
