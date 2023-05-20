@@ -8,7 +8,6 @@ export class AppController {
   @Post('createUser')
   createUser(@Body() body) {
     this.appService.createUser(body);
-    this.appService.mintNFT(body);
   }
 
   @Post('mint')
