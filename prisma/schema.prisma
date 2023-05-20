@@ -12,32 +12,5 @@ datasource db {
 
 model User {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
-  username String @unique
-  email    String @unique
-  password String
-  posts    Post[]
-  event   Event[]
-}
-
-model Post {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  title     String
-  content   String
-  authorId  String  @db.ObjectId
-  author    User    @relation(fields: [authorId], references: [id])
-  channelId String  @db.ObjectId
-  channel   Channel @relation(fields: [channelId], references: [id])
-}
-
-model Channel {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  name  String
-  posts Post[]
-}
-
-model Event {
-  id      String @id @default(auto()) @map("_id") @db.ObjectId
-  name    String
-  userId  String @db.ObjectId
-  user    User   @relation(fields: [userId], references: [id])
+  address  String @unique
 }
