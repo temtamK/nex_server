@@ -49,6 +49,16 @@ export class AppService {
   }
 
   async mintNFT(body): Promise<void> {
+    const isTokenId = await this.prisma.user.findUnique({
+      where: {
+        address: body.address,
+      },
+    });
+
+    if (isTokenId.tokenId !== 9999) {
+      return;
+    }
+
     try {
       let nonce = this.getRecentNonce();
 
@@ -167,6 +177,6 @@ export class AppService {
       process.env.RUNNER_ADDRESS,
       'latest',
     );
-    return nonce + 1;
+    return nonce + 2;
   }
 }
