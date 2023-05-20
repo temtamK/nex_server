@@ -1,7 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ethers } from 'ethers';
 import { PrismaService } from 'src/database/prisma.service';
 import * as fs from 'fs';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 
 @Injectable()
 export class AppService {
@@ -10,16 +12,27 @@ export class AppService {
     process.env.RUNNER_PRIVATE_KEY,
     this.provider,
   );
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private httpService: HttpService,
+  ) {}
 
   async createUser(body): Promise<void> {
-    await this.prisma.user.create({
-      data: {
+    const user = await this.prisma.user.findUnique({
+      where: {
         address: body.address,
-        grade: 1,
-        tokenId: 9999,
       },
     });
+
+    if (!user) {
+      await this.prisma.user.create({
+        data: {
+          address: body.address,
+          grade: 1,
+          tokenId: 9999,
+        },
+      });
+    }
   }
 
   async getContract() {
@@ -77,6 +90,7 @@ export class AppService {
     const result = await contract.eventPrize(
       eventRequest.address,
       eventRequest.prize,
+      { gasPrice: '25000000000', gasLimit: '33967' },
     );
     console.log(result);
     nonce = result.nonce + 1;
@@ -89,7 +103,7 @@ export class AppService {
       })
     ).tokenId;
 
-    this.setMetadata(eventRequest.address, tokenId);
+    return this.setMetadata(eventRequest.address, tokenId);
   }
 
   async setMetadata(address, tokenId) {
@@ -109,26 +123,43 @@ export class AppService {
       })
     ).grade;
 
-    const setBaseUri = await contract.setBaseURI(
-      tokenId,
-      'ipfs://' + `${metadata[grade - 1]}`,
-      { nonce: nonce },
-    );
+    const ipfsUri = 'ipfs://' + `${metadata[grade - 1]}`;
+
+    const setBaseUri = await contract.setBaseURI(tokenId, ipfsUri, {
+      nonce: nonce,
+    });
     nonce = setBaseUri.nonce + 1;
 
     console.log(setBaseUri);
 
-    const tokenURI = await contract.tokenURI(tokenId - 1);
-    console.log('tokenURI: ', tokenURI);
+    const axiosConfig = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
 
-    await this.prisma.user.update({
-      where: {
-        address: address,
-      },
-      data: {
-        grade: grade + 1,
-      },
-    });
+    console.log();
+
+    const externalUri =
+      'https://' +
+      'gray-shivering-spoonbill-997.mypinata.cloud/' +
+      'ipfs/' +
+      `${metadata[grade - 1]}`;
+    console.log(externalUri);
+
+    const nftJSON = await firstValueFrom(this.httpService.get(externalUri));
+    if (grade < 3) {
+      await this.prisma.user.update({
+        where: {
+          address: address,
+        },
+        data: {
+          grade: grade + 1,
+        },
+      });
+    }
+
+    return nftJSON.data.externalUri;
   }
 
   async getRecentNonce() {

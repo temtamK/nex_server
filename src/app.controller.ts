@@ -17,6 +17,6 @@ export class AppController {
 
   @Post('event')
   callEvent(@Body() eventRequest) {
-    this.appService.callEvent(eventRequest);
+    return this.appService.callEvent(eventRequest);
   }
 }
